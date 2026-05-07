@@ -1,0 +1,44 @@
+services:
+  # ── PostgreSQL (로컬 개발용) ──────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: hackathon-postgres
+    environment:
+      POSTGRES_DB: hackathon
+      POSTGRES_USER: hackathon
+      POSTGRES_PASSWORD: hackathon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U hackathon -d hackathon" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Spring Boot App (로컬 통합 실행 시) ───────────────────
+  # 기본적으로 주석 처리. 로컬 개발 시에는 IDE에서 직접 실행 권장.
+  # EC2 배포 시에는 아래 서비스를 활성화.
+  # app:
+  #   build: .
+  #   container_name: hackathon-app
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: prod
+  #     DB_URL: jdbc:postgresql://postgres:5432/hackathon
+  #     DB_USERNAME: hackathon
+  #     DB_PASSWORD: hackathon
+  #     JWT_SECRET: ${JWT_SECRET}
+  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
+  #     GOOGLE_VISION_API_KEY: ${GOOGLE_VISION_API_KEY}
+  #     KIOSK_DEVICE_SECRET: ${KIOSK_DEVICE_SECRET}
+  #   ports:
+  #     - "8080:8080"
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
