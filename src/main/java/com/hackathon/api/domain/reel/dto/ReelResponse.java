@@ -7,16 +7,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/** 릴스 단건 응답 — 업로드 결과 및 피드 목록 양쪽에서 공통으로 사용 */
 public record ReelResponse(
         UUID id,
         UUID challengeId,
-        UUID crewId,
+        UUID crewId,          // 모집용(recruitment)이면 null
         String videoUrl,
-        String reelType,
+        String reelType,      // "recruitment" | "completion"
         List<ParticipantInfo> participants,
         LocalDateTime createdAt
 ) {
 
+    /** 릴스 참여자 요약 — 크루원 카드 및 피드에서 참여자 프로필 표시용 */
     public record ParticipantInfo(
             UUID userId,
             String nickname,

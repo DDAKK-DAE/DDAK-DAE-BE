@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 파일 업로드 컨트롤러.
+ * 프론트엔드는 이 엔드포인트로 파일을 먼저 올리고 반환된 URL을
+ * POST /reels(videoUrl) 또는 PATCH /auth/me(profile_image) 요청에 사용한다.
+ */
 @Tag(name = "Files", description = "이미지 / 동영상 업로드")
 @RestController
 @RequestMapping("/files")

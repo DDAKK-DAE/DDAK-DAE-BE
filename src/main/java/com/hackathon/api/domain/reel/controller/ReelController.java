@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * 릴스 컨트롤러.
+ * POST /reels          — 파일 업로드 후 받은 URL을 videoUrl로 전달해 릴스를 등록한다.
+ * GET  /challenges/{id}/reels — 같은 챌린지의 릴스를 음원 통일 몰아보기 피드로 제공한다.
+ */
 @Tag(name = "Reels", description = "릴스 업로드 및 피드 조회")
 @RestController
 @RequiredArgsConstructor
