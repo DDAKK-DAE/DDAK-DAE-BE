@@ -100,6 +100,9 @@ public class Challenge {
     }
 
     public void syncCurrentParticipants(int memberCount) {
+        if (memberCount < 0 || memberCount > Short.MAX_VALUE) {
+            throw new IllegalArgumentException("memberCount out of range: " + memberCount);
+        }
         this.currentParticipants = (short) memberCount;
     }
 

@@ -58,6 +58,10 @@ public class ReelService {
         if (req.crewId() != null) {
             crew = crewRepository.findById(req.crewId())
                     .orElseThrow(() -> new BusinessException(ReelErrorCode.CREW_NOT_FOUND));
+            // 크루가 요청한 챌린지 소속인지 검증 — 타 챌린지 크루로 완료 릴스 등록 방지
+            if (!crew.getChallenge().getId().equals(req.challengeId())) {
+                throw new BusinessException(ReelErrorCode.CREW_CHALLENGE_MISMATCH);
+            }
             if (!crewMemberRepository.existsByCrew_IdAndUser_Id(req.crewId(), uploaderId)) {
                 throw new BusinessException(ReelErrorCode.NOT_A_CREW_MEMBER);
             }

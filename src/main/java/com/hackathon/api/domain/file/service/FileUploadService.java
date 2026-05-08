@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -17,6 +19,11 @@ import java.util.UUID;
  */
 @Service
 public class FileUploadService {
+
+    private static final Set<String> ALLOWED_EXTENSIONS =
+            Set.of(".jpg", ".jpeg", ".png", ".webp", ".mp4", ".mov");
+    private static final Set<String> ALLOWED_CONTENT_TYPES =
+            Set.of("image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime");
 
     private final Path uploadDir;
     private final String baseUrl;
@@ -35,10 +42,20 @@ public class FileUploadService {
      * 원본 파일명 대신 UUID를 사용해 충돌과 경로 조작 공격을 방지한다.
      */
     public String store(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("빈 파일은 업로드할 수 없습니다.");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+            throw new IllegalArgumentException("허용되지 않은 파일 형식입니다.");
+        }
         String originalFilename = file.getOriginalFilename();
         String ext = (originalFilename != null && originalFilename.contains("."))
                 ? originalFilename.substring(originalFilename.lastIndexOf('.'))
                 : "";
+        if (!ALLOWED_EXTENSIONS.contains(ext.toLowerCase(Locale.ROOT))) {
+            throw new IllegalArgumentException("허용되지 않은 확장자입니다.");
+        }
         String filename = UUID.randomUUID() + ext;
 
         try {
