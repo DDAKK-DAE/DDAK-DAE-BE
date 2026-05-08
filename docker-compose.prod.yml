@@ -18,6 +18,13 @@ services:
       timeout: 5s
       retries: 5
 
+  ai-server:
+    build: ./ddak-dae-ai
+    container_name: hackathon-ai
+    env_file:
+      - .env
+    restart: unless-stopped
+
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
     container_name: hackathon-app
@@ -25,11 +32,14 @@ services:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      AI_SERVER_URL: http://ai-server:8000
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+      ai-server:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1" ]
