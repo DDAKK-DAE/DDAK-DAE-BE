@@ -114,7 +114,7 @@ public class ReelService {
                 .toList();
 
         // 챌린지가 마감되어 크루가 생성된 경우 crewId 포함 — 프론트에서 크루 공간으로 이동에 사용
-        UUID crewId = crewRepository.findByChallenge_Id(challengeId)
+        UUID crewId = crewRepository.findByChallengeId(challengeId)
                 .map(Crew::getId)
                 .orElse(null);
 
