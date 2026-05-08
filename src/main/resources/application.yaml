@@ -3,8 +3,6 @@ spring:
     name: hackathon
   profiles:
     active: local
-
-spring:
   servlet:
     multipart:
       max-file-size: 200MB
