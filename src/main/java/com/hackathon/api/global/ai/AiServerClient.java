@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 @Slf4j
 @Component
@@ -29,6 +30,7 @@ public class AiServerClient {
     public AiServerClient(AiServerProperties props) {
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(3))
                 .build();
         this.objectMapper = new ObjectMapper();
         this.baseUrl = props.baseUrl();
@@ -40,18 +42,23 @@ public class AiServerClient {
             String json = objectMapper.writeValueAsString(reqBody);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + path))
+                    .timeout(Duration.ofSeconds(30))
                     .header("Content-Type", "application/json")
                     .header("x-internal-api-key", internalKey)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                log.error("AI 서버 오류 [{}] {}: {}", response.statusCode(), path, response.body());
+                log.error("AI 서버 오류 [{}] {}", response.statusCode(), path);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, errorMsg);
             }
             return objectMapper.readValue(response.body(), responseClass);
         } catch (BusinessException e) {
             throw e;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("AI 서버 호출 인터럽트 {}: {}", path, e.getMessage());
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, errorMsg);
         } catch (Exception e) {
             log.error("AI 서버 호출 실패 {}: {}", path, e.getMessage());
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, errorMsg);
