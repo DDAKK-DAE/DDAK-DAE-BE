@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ReelRepository extends JpaRepository<Reel, UUID> {
 
     List<Reel> findByCrew_Id(UUID crewId);
+
+    List<Reel> findByCrew_IdAndReelType(UUID crewId, String reelType);
 }
