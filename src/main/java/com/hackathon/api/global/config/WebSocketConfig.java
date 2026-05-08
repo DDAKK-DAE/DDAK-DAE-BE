@@ -2,6 +2,7 @@ package com.hackathon.api.global.config;
 
 import com.hackathon.api.global.security.StompAuthChannelInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -16,6 +17,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // 클라이언트 구독 prefix: /topic/crews/{crewId}
@@ -26,13 +30,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] origins = allowedOrigins.split(",");
         // 프로덕션용: SockJS 폴백 포함
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(origins)
                 .withSockJS();
         // 개발·테스트용: 순수 WebSocket (Postman 등 STOMP 클라이언트 연결)
         registry.addEndpoint("/ws-raw")
-                .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns(origins);
     }
 
     @Override

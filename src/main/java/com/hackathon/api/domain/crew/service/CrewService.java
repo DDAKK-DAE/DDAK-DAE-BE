@@ -19,6 +19,8 @@ import com.hackathon.api.domain.user.entity.User;
 import com.hackathon.api.domain.user.repository.UserRepository;
 import com.hackathon.api.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,7 +103,8 @@ public class CrewService {
 
         checkMembership(crewId, currentUserId);
 
-        List<Reel> reels = reelRepository.findByCrew_IdAndReelType(crewId, "completion");
+        List<Reel> reels = reelRepository.findByCrew_IdAndReelType(crewId, "completion",
+                PageRequest.of(0, 50, Sort.by("createdAt").descending()));
         return reels.stream().map(reel -> {
             List<ReelParticipant> participants = reelParticipantRepository.findByReel_Id(reel.getId());
             return CrewArchiveReelResponse.from(reel, participants);
