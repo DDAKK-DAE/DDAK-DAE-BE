@@ -1,7 +1,9 @@
 package com.hackathon.api.global.exception;
 
 import com.hackathon.api.global.response.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e, HttpServletResponse response) {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         AppErrorCode errorCode = e.getErrorCode();
         log.warn("[BusinessException] {} - {}", errorCode.getCode(), e.getMessage());
         return ResponseEntity
@@ -21,7 +24,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e, HttpServletResponse response) {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .findFirst()
@@ -33,7 +37,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e, HttpServletResponse response) {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         log.error("[UnhandledException]", e);
         return ResponseEntity
                 .internalServerError()
