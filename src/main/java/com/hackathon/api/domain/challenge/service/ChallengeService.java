@@ -139,6 +139,7 @@ public class ChallengeService {
                 .findByChallengeIdAndStatus(challengeId, "accepted")
                 .stream().map(Participation::getApplicantUserId).toList();
 
+        challenge.syncCurrentParticipants(acceptedUserIds.size() + 1);
         challenge.close();
 
         CrewResponse crew = crewService.createCrew(challengeId, userId, acceptedUserIds);
