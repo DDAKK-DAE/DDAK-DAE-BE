@@ -67,7 +67,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         String destination = accessor.getDestination();
         if (destination == null || !destination.startsWith(CREW_TOPIC_PREFIX)) return;
 
-        String crewIdStr = destination.substring(CREW_TOPIC_PREFIX.length()).split("/")[0];
+        String pathAfterPrefix = destination.substring(CREW_TOPIC_PREFIX.length());
+        if (pathAfterPrefix.isEmpty()) {
+            throw new AccessDeniedException("crewId가 누락되었습니다.");
+        }
+        String crewIdStr = pathAfterPrefix.split("/")[0];
+        if (crewIdStr.isEmpty()) {
+            throw new AccessDeniedException("crewId가 누락되었습니다.");
+        }
 
         // /topic/crews/ 로 시작했는데 UUID가 아니면 거부
         UUID crewId;
