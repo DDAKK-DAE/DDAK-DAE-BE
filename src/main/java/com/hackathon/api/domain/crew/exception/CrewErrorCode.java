@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 public enum CrewErrorCode implements AppErrorCode {
 
     CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CREW_NOT_FOUND", "크루를 찾을 수 없습니다."),
+    CREW_ALREADY_EXISTS(HttpStatus.CONFLICT, "CREW_ALREADY_EXISTS", "해당 챌린지의 크루가 이미 존재합니다."),
     NOT_A_MEMBER(HttpStatus.FORBIDDEN, "NOT_A_CREW_MEMBER", "크루 멤버만 접근할 수 있습니다."),
     CHALLENGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGE_NOT_FOUND", "챌린지를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,6 +49,10 @@ public class CrewService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new BusinessException(CrewErrorCode.CHALLENGE_NOT_FOUND));
 
+        if (crewRepository.findByChallenge_Id(challengeId).isPresent()) {
+            throw new BusinessException(CrewErrorCode.CREW_ALREADY_EXISTS);
+        }
+
         Crew crew = Crew.builder().challenge(challenge).build();
         crewRepository.save(crew);
 
@@ -59,8 +64,8 @@ public class CrewService {
         crewMemberRepository.save(CrewMember.builder().crew(crew).user(host).build());
         allMemberIds.add(hostUserId);
 
-        // 수락된 참여자 등록 (주최자 중복 방지)
-        for (UUID userId : acceptedUserIds) {
+        // 수락된 참여자 등록 (중복 제거 후 주최자 스킵)
+        for (UUID userId : new LinkedHashSet<>(acceptedUserIds)) {
             if (userId.equals(hostUserId)) continue;
             User member = userRepository.findById(userId)
                     .orElseThrow(() -> new BusinessException(CrewErrorCode.USER_NOT_FOUND));
@@ -96,7 +101,7 @@ public class CrewService {
 
         checkMembership(crewId, currentUserId);
 
-        List<Reel> reels = reelRepository.findByCrew_Id(crewId);
+        List<Reel> reels = reelRepository.findByCrew_IdAndReelType(crewId, "completion");
         return reels.stream().map(reel -> {
             List<ReelParticipant> participants = reelParticipantRepository.findByReel_Id(reel.getId());
             return CrewArchiveReelResponse.from(reel, participants);
