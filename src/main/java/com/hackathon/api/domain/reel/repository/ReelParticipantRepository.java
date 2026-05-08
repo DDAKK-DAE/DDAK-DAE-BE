@@ -1,6 +1,7 @@
 package com.hackathon.api.domain.reel.repository;
 
 import com.hackathon.api.domain.reel.entity.ReelParticipant;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +11,31 @@ import java.util.UUID;
 
 public interface ReelParticipantRepository extends JpaRepository<ReelParticipant, UUID> {
 
+    /**
+     * 릴스 참여자 목록 조회 — JOIN FETCH로 user를 한 번에 로드해 N+1을 방지한다.
+     * 피드/아카이브에서 릴스마다 참여자 프로필을 표시할 때 호출된다.
+     */
     @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.user WHERE rp.reel.id = :reelId")
     List<ReelParticipant> findByReel_Id(@Param("reelId") UUID reelId);
+
+    /**
+     * 릴스 ID 목록으로 참여자를 한 번에 조회 — N+1 방지용 배치 조회.
+     * 피드/이력 API에서 릴스 목록을 먼저 조회한 뒤 참여자를 단일 쿼리로 가져올 때 사용한다.
+     */
+    @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.user WHERE rp.reel.id IN :reelIds")
+    List<ReelParticipant> findByReel_IdIn(@Param("reelIds") List<UUID> reelIds);
+
+    /**
+     * 유저 참여 릴스 이력 — 1단계: ID만 페이지네이션으로 조회.
+     * JOIN FETCH 없이 페이지네이션해야 HHH000104(메모리 페이지네이션) 경고를 피할 수 있다.
+     */
+    @Query("SELECT rp.id FROM ReelParticipant rp WHERE rp.user.id = :userId ORDER BY rp.reel.createdAt DESC")
+    List<UUID> findIdsByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+    /**
+     * 유저 참여 릴스 이력 — 2단계: ID 목록으로 reel JOIN FETCH 조회.
+     * 1단계에서 얻은 ID로만 호출해 실제 데이터를 메모리 페이지네이션 없이 로드한다.
+     */
+    @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.reel WHERE rp.id IN :ids")
+    List<ReelParticipant> findByIdInWithReel(@Param("ids") List<UUID> ids);
 }

@@ -52,7 +52,7 @@ public class CrewService {
         Challenge challenge = challengeRepository.findById(challengeId)
                 .orElseThrow(() -> new BusinessException(CrewErrorCode.CHALLENGE_NOT_FOUND));
 
-        if (crewRepository.findByChallenge_Id(challengeId).isPresent()) {
+        if (crewRepository.findByChallengeId(challengeId).isPresent()) {
             throw new BusinessException(CrewErrorCode.CREW_ALREADY_EXISTS);
         }
 
