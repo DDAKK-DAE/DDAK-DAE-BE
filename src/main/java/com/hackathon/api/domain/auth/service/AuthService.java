@@ -32,6 +32,10 @@ public class AuthService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .nickname(request.nickname())
+                .name(request.name())
+                .birthday(request.birthday())
+                .age(request.age() != null ? request.age().shortValue() : null)
+                .job(request.job())
                 .build();
         userRepository.save(user);
 
@@ -61,7 +65,10 @@ public class AuthService {
     public UserResponse updateMe(UUID userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.USER_NOT_FOUND));
-        user.updateProfile(request.nickname(), request.bio(), request.profileImage());
+        user.updateProfile(request.nickname(), request.bio(), request.profileImage(),
+                request.name(), request.birthday(),
+                request.age() != null ? request.age().shortValue() : null,
+                request.job());
         return UserResponse.from(user);
     }
 }
