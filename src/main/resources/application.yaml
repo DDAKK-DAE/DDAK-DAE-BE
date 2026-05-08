@@ -3,6 +3,10 @@ spring:
     name: hackathon
   profiles:
     active: local
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
 
 app:
   jwt:
@@ -14,6 +18,9 @@ app:
     api-key: ${ANTHROPIC_API_KEY:}
     model: claude-sonnet-4-6
     base-url: https://api.anthropic.com
+  upload:
+    base-url: ${UPLOAD_BASE_URL:http://localhost:8080}
+    path: ${UPLOAD_PATH:./uploads}
 
 ---
 spring:

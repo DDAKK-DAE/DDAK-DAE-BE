@@ -41,7 +41,7 @@ public class Challenge {
     private Short maxParticipants;
 
     @Column(name = "current_participants", nullable = false)
-    private Short currentParticipants = 0;
+    private Short currentParticipants = 1;
 
     @Column(nullable = false, length = 20)
     private String status = "open";
@@ -62,7 +62,7 @@ public class Challenge {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        if (this.currentParticipants == null) this.currentParticipants = 0;
+        if (this.currentParticipants == null) this.currentParticipants = 1;
         if (this.status == null) this.status = "open";
     }
 
@@ -76,7 +76,7 @@ public class Challenge {
         this.locationText = locationText;
         this.category = category;
         this.maxParticipants = maxParticipants;
-        this.currentParticipants = 0;
+        this.currentParticipants = 1;
         this.status = "open";
         this.deadlineAt = deadlineAt;
         this.audioUrl = audioUrl;
@@ -97,6 +97,10 @@ public class Challenge {
 
     public void close() {
         this.status = "closed";
+    }
+
+    public void syncCurrentParticipants(int memberCount) {
+        this.currentParticipants = (short) memberCount;
     }
 
     public void incrementParticipants() {

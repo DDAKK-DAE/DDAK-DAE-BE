@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        // 업로드된 파일 공개 서빙
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // WebSocket 핸드셰이크·SockJS 폴백 경로 — STOMP 레벨에서 별도 인증
                         .requestMatchers(HttpMethod.GET, "/ws", "/ws/**", "/ws-raw", "/ws-raw/**").permitAll()
                         .anyRequest().authenticated()

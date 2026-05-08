@@ -4,6 +4,8 @@ import com.hackathon.api.domain.challenge.dto.*;
 import com.hackathon.api.domain.challenge.entity.Challenge;
 import com.hackathon.api.domain.challenge.exception.ChallengeErrorCode;
 import com.hackathon.api.domain.challenge.repository.ChallengeRepository;
+import com.hackathon.api.domain.crew.dto.CrewResponse;
+import com.hackathon.api.domain.crew.service.CrewService;
 import com.hackathon.api.domain.participation.entity.Participation;
 import com.hackathon.api.domain.participation.repository.ParticipationRepository;
 import com.hackathon.api.domain.user.entity.User;
@@ -30,6 +32,7 @@ public class ChallengeService {
     private final ChallengeRepository challengeRepository;
     private final ParticipationRepository participationRepository;
     private final UserRepository userRepository;
+    private final CrewService crewService;
 
     public Page<ChallengeListItemResponse> getFeed(UUID userId, String category, String location, Pageable pageable) {
         // 클라이언트 sort 파라미터 무시 — in-memory 개인화 정렬로 처리
@@ -136,10 +139,11 @@ public class ChallengeService {
                 .findByChallengeIdAndStatus(challengeId, "accepted")
                 .stream().map(Participation::getApplicantUserId).toList();
 
+        challenge.syncCurrentParticipants(acceptedUserIds.size() + 1);
         challenge.close();
 
-        // TODO: B 파트 CrewService.createCrew(challengeId, userId, acceptedUserIds) 연동 후 crewId 반환
-        return new CloseChallengeResponse(null, acceptedUserIds);
+        CrewResponse crew = crewService.createCrew(challengeId, userId, acceptedUserIds);
+        return new CloseChallengeResponse(crew.crewId(), crew.memberIds());
     }
 
     private Challenge findById(UUID id) {
