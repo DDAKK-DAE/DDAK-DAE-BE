@@ -11,9 +11,12 @@ import com.hackathon.api.domain.user.entity.User;
 import com.hackathon.api.domain.user.repository.UserRepository;
 import com.hackathon.api.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -53,8 +56,13 @@ public class CrewMessageService {
         crewMessageRepository.save(message);
 
         CrewMessageResponse response = CrewMessageResponse.from(message);
-        // 구독 중인 모든 크루 멤버에게 브로드캐스트
-        messagingTemplate.convertAndSend("/topic/crews/" + crewId, response);
+        // DB 커밋 후 브로드캐스트 — 커밋 실패 시 클라이언트에 미발송 보장
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                messagingTemplate.convertAndSend("/topic/crews/" + crewId, response);
+            }
+        });
         return response;
     }
 
@@ -66,7 +74,7 @@ public class CrewMessageService {
         if (!crewMemberRepository.existsByCrew_IdAndUser_Id(crewId, currentUserId)) {
             throw new BusinessException(CrewMessageErrorCode.NOT_A_MEMBER);
         }
-        return crewMessageRepository.findByCrew_IdOrderByCreatedAtAsc(crewId)
+        return crewMessageRepository.findByCrew_IdOrderByCreatedAtAsc(crewId, PageRequest.ofSize(200))
                 .stream().map(CrewMessageResponse::from).toList();
     }
 }
