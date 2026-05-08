@@ -2,6 +2,7 @@ package com.hackathon.api.domain.ai.controller;
 
 import com.hackathon.api.domain.ai.dto.ChemistryRequest;
 import com.hackathon.api.domain.ai.dto.ChemistryResponse;
+import com.hackathon.api.domain.ai.dto.CrewRecommendationHttpRequest;
 import com.hackathon.api.domain.ai.dto.CrewRecommendationRequest;
 import com.hackathon.api.domain.ai.dto.CrewRecommendationResponse;
 import com.hackathon.api.domain.ai.dto.GenerateDescriptionRequest;
@@ -32,7 +33,7 @@ public class AiController {
     }
 
     @PostMapping("/crew-recommendation")
-    public ApiResponse<CrewRecommendationResponse> crewRecommendation(@RequestBody CrewRecommendationRequest req) {
+    public ApiResponse<CrewRecommendationResponse> crewRecommendation(@RequestBody CrewRecommendationHttpRequest req) {
         return ApiResponse.ok(aiService.crewRecommendation(req));
     }
 }
