@@ -137,8 +137,12 @@ public class ReelService {
      * 마이페이지에서 본인 이력 조회 및 타 유저 프로필 조회 양쪽에서 사용한다.
      */
     public List<ReelResponse> getUserReels(UUID userId) {
-        List<ReelParticipant> myEntries = reelParticipantRepository.findByUser_Id(
-                userId, PageRequest.ofSize(50));
+        // 1단계: JOIN FETCH 없이 ID만 페이지네이션 조회 — HHH000104 메모리 페이지네이션 경고 방지
+        List<UUID> ids = reelParticipantRepository.findIdsByUserId(userId, PageRequest.ofSize(50));
+        if (ids.isEmpty()) return List.of();
+
+        // 2단계: ID 목록으로 reel JOIN FETCH 조회
+        List<ReelParticipant> myEntries = reelParticipantRepository.findByIdInWithReel(ids);
 
         // 릴스 ID 목록으로 참여자를 한 번에 조회해 N+1 방지
         List<UUID> reelIds = myEntries.stream().map(rp -> rp.getReel().getId()).toList();

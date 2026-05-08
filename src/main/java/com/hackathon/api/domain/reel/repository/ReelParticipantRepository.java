@@ -26,9 +26,16 @@ public interface ReelParticipantRepository extends JpaRepository<ReelParticipant
     List<ReelParticipant> findByReel_IdIn(@Param("reelIds") List<UUID> reelIds);
 
     /**
-     * 유저 참여 릴스 이력 조회 — reel_participants 기반으로 해당 유저가 등록된 릴스를 최신순으로 반환한다.
-     * JOIN FETCH rp.reel로 릴스 정보를 한 번에 로드해 N+1을 방지한다.
+     * 유저 참여 릴스 이력 — 1단계: ID만 페이지네이션으로 조회.
+     * JOIN FETCH 없이 페이지네이션해야 HHH000104(메모리 페이지네이션) 경고를 피할 수 있다.
      */
-    @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.reel WHERE rp.user.id = :userId ORDER BY rp.reel.createdAt DESC")
-    List<ReelParticipant> findByUser_Id(@Param("userId") UUID userId, Pageable pageable);
+    @Query("SELECT rp.id FROM ReelParticipant rp WHERE rp.user.id = :userId ORDER BY rp.reel.createdAt DESC")
+    List<UUID> findIdsByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+    /**
+     * 유저 참여 릴스 이력 — 2단계: ID 목록으로 reel JOIN FETCH 조회.
+     * 1단계에서 얻은 ID로만 호출해 실제 데이터를 메모리 페이지네이션 없이 로드한다.
+     */
+    @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.reel WHERE rp.id IN :ids")
+    List<ReelParticipant> findByIdInWithReel(@Param("ids") List<UUID> ids);
 }
