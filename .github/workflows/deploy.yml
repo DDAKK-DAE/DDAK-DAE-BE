@@ -92,6 +92,9 @@ jobs:
           script: |
             set -e
 
+            # 이미지명은 소문자만 허용
+            GH_REPO=$(echo "$GH_REPO" | tr '[:upper:]' '[:lower:]')
+
             # .env 파일 자동 생성 (특수문자 안전하게 처리)
             mkdir -p ~/hackathon
             printf '%s' "$ENV_CONTENT" > ~/hackathon/.env
