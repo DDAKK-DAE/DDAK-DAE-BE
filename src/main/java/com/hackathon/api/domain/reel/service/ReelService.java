@@ -24,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -110,11 +112,16 @@ public class ReelService {
                 ? reelRepository.findByChallenge_IdAndReelTypeOrderByCreatedAtDesc(challengeId, type, pageable)
                 : reelRepository.findByChallenge_IdOrderByCreatedAtDesc(challengeId, pageable);
 
+        // 릴스 ID 목록으로 참여자를 한 번에 조회해 N+1 방지
+        List<UUID> reelIds = reels.stream().map(Reel::getId).toList();
+        Map<UUID, List<ReelParticipant>> participantsByReelId =
+                reelParticipantRepository.findByReel_IdIn(reelIds).stream()
+                        .collect(Collectors.groupingBy(rp -> rp.getReel().getId()));
+
         List<ReelResponse> reelResponses = reels.stream()
-                .map(reel -> {
-                    List<ReelParticipant> participants = reelParticipantRepository.findByReel_Id(reel.getId());
-                    return ReelResponse.from(reel, participants);
-                })
+                .map(reel -> ReelResponse.from(
+                        reel,
+                        participantsByReelId.getOrDefault(reel.getId(), List.of())))
                 .toList();
 
         // 챌린지가 마감되어 크루가 생성된 경우 crewId 포함 — 프론트에서 크루 공간으로 이동에 사용
@@ -133,11 +140,16 @@ public class ReelService {
         List<ReelParticipant> myEntries = reelParticipantRepository.findByUser_Id(
                 userId, PageRequest.ofSize(50));
 
+        // 릴스 ID 목록으로 참여자를 한 번에 조회해 N+1 방지
+        List<UUID> reelIds = myEntries.stream().map(rp -> rp.getReel().getId()).toList();
+        Map<UUID, List<ReelParticipant>> participantsByReelId =
+                reelParticipantRepository.findByReel_IdIn(reelIds).stream()
+                        .collect(Collectors.groupingBy(rp -> rp.getReel().getId()));
+
         return myEntries.stream()
-                .map(rp -> {
-                    List<ReelParticipant> participants = reelParticipantRepository.findByReel_Id(rp.getReel().getId());
-                    return ReelResponse.from(rp.getReel(), participants);
-                })
+                .map(rp -> ReelResponse.from(
+                        rp.getReel(),
+                        participantsByReelId.getOrDefault(rp.getReel().getId(), List.of())))
                 .toList();
     }
 }

@@ -19,6 +19,13 @@ public interface ReelParticipantRepository extends JpaRepository<ReelParticipant
     List<ReelParticipant> findByReel_Id(@Param("reelId") UUID reelId);
 
     /**
+     * 릴스 ID 목록으로 참여자를 한 번에 조회 — N+1 방지용 배치 조회.
+     * 피드/이력 API에서 릴스 목록을 먼저 조회한 뒤 참여자를 단일 쿼리로 가져올 때 사용한다.
+     */
+    @Query("SELECT rp FROM ReelParticipant rp JOIN FETCH rp.user WHERE rp.reel.id IN :reelIds")
+    List<ReelParticipant> findByReel_IdIn(@Param("reelIds") List<UUID> reelIds);
+
+    /**
      * 유저 참여 릴스 이력 조회 — reel_participants 기반으로 해당 유저가 등록된 릴스를 최신순으로 반환한다.
      * JOIN FETCH rp.reel로 릴스 정보를 한 번에 로드해 N+1을 방지한다.
      */
