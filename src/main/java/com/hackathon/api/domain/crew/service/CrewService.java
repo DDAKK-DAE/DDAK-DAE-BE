@@ -19,6 +19,7 @@ import com.hackathon.api.domain.user.entity.User;
 import com.hackathon.api.domain.user.repository.UserRepository;
 import com.hackathon.api.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,11 @@ public class CrewService {
         }
 
         Crew crew = Crew.builder().challenge(challenge).build();
-        crewRepository.save(crew);
+        try {
+            crewRepository.saveAndFlush(crew);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(CrewErrorCode.CREW_ALREADY_EXISTS);
+        }
 
         List<UUID> allMemberIds = new ArrayList<>();
 
