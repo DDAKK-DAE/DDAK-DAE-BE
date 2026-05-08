@@ -21,6 +21,9 @@ app:
   upload:
     base-url: ${UPLOAD_BASE_URL:http://localhost:8080}
     path: ${UPLOAD_PATH:./uploads}
+  ai-server:
+    base-url: ${AI_SERVER_URL:http://localhost:8000}
+    internal-key: ${INTERNAL_API_KEY:FFvfm1Qbp2bVkHAzLFZ4gDmNEL-LSU6WCDM0eWt-0bc}
 
 ---
 spring:
