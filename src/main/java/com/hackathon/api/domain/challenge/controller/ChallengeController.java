@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +37,7 @@ public class ChallengeController {
             @CurrentUserId UUID userId,
             @Parameter(description = "카테고리 필터 (댄스/일상/스포츠/푸드/기타)") @RequestParam(required = false) String category,
             @Parameter(description = "지역 텍스트 필터") @RequestParam(required = false) String location,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @Parameter(hidden = true) @PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.ok(challengeService.getFeed(userId, category, location, pageable));
     }
 

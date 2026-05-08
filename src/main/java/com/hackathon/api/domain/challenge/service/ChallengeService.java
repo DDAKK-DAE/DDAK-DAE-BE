@@ -13,7 +13,9 @@ import com.hackathon.api.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,10 @@ public class ChallengeService {
     private final UserRepository userRepository;
 
     public Page<ChallengeListItemResponse> getFeed(UUID userId, String category, String location, Pageable pageable) {
-        Page<Challenge> page = challengeRepository.findFeed(category, location, pageable);
+        // 클라이언트 sort 파라미터 무시 — in-memory 개인화 정렬로 처리
+        Pageable dbPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Challenge> page = challengeRepository.findFeed(category, location, dbPageable);
         List<Challenge> challenges = page.getContent();
 
         // 유저의 accepted 참여 카테고리 빈도 스코어 계산
@@ -61,7 +66,7 @@ public class ChallengeService {
                 .map(c -> ChallengeListItemResponse.of(c, hostMap.get(c.getHostUserId())))
                 .toList();
 
-        return new PageImpl<>(sorted, pageable, page.getTotalElements());
+        return new PageImpl<>(sorted, dbPageable, page.getTotalElements());
     }
 
     public ChallengeDetailResponse getDetail(UUID id) {
