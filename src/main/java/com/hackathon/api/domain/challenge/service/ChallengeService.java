@@ -120,6 +120,7 @@ public class ChallengeService {
         if (!challenge.isOpen()) {
             throw new BusinessException(ChallengeErrorCode.CANNOT_DELETE_CLOSED);
         }
+        participationRepository.deleteAllByChallengeId(challengeId);
         challengeRepository.delete(challenge);
     }
 

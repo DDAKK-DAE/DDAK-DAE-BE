@@ -15,4 +15,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, UU
     List<Participation> findByApplicantUserIdAndStatus(UUID applicantUserId, String status);
 
     List<Participation> findByChallengeIdAndStatus(UUID challengeId, String status);
+
+    void deleteAllByChallengeId(UUID challengeId);
 }
