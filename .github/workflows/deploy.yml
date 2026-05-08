@@ -66,35 +66,47 @@ jobs:
     name: Deploy to EC2
     runs-on: ubuntu-latest
     needs: build-and-push
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV_CONTENT: ${{ secrets.ENV_FILE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_REPO: ${{ github.repository }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: ENV_CONTENT,GH_TOKEN,GH_ACTOR,GH_REPO
           script: |
             set -e
 
+            # .env 파일 자동 생성 (특수문자 안전하게 처리)
+            mkdir -p ~/hackathon
+            printf '%s' "$ENV_CONTENT" > ~/hackathon/.env
+
             # GitHub Container Registry 로그인
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
             # 최신 이미지 Pull
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ghcr.io/${GH_REPO}:latest
 
             # 배포 디렉토리로 이동
             cd ~/hackathon
 
-            # docker-compose.prod.yml이 없으면 GitHub에서 직접 다운로드
-            if [ ! -f docker-compose.prod.yml ]; then
-              curl -sSL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.prod.yml \
-                -o docker-compose.prod.yml
-            else
-              # 최신 compose 파일 업데이트
-              curl -sSL https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.prod.yml \
-                -o docker-compose.prod.yml
-            fi
+            # 최신 compose 파일 업데이트 (private 레포 대응 Authorization 헤더 포함)
+            curl -sSL \
+              -H "Authorization: token $GH_TOKEN" \
+              https://raw.githubusercontent.com/${GH_REPO}/main/docker-compose.prod.yml \
+              -o docker-compose.prod.yml
+
+            # docker-compose 이미지 이름 변수
+            export GITHUB_REPOSITORY="$GH_REPO"
 
             # 재시작
             docker-compose -f docker-compose.prod.yml down --remove-orphans

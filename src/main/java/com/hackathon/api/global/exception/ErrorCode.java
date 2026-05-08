@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
  * 예시: com.hackathon.api.domain.store.exception.StoreErrorCode
  */
 @Getter
-public enum ErrorCode {
+public enum ErrorCode implements AppErrorCode {
 
     // ── 공통 ──────────────────────────────────────────────
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다."),

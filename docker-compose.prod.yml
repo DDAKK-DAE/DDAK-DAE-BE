@@ -1,19 +1,35 @@
 # EC2 배포용 docker-compose
 # 사용법: docker-compose -f docker-compose.prod.yml up -d
-#
-# 필요한 환경변수는 EC2의 .env 파일에 정의하거나
-# 직접 export 후 실행하세요.
 
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: hackathon-db
+    environment:
+      POSTGRES_DB: hackathon
+      POSTGRES_USER: hackathon
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackathon"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
     container_name: hackathon-app
     env_file:
-      - .env                    # EC2의 .env 파일에서 환경변수 주입
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
     ports:
       - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1" ]
@@ -21,3 +37,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+volumes:
+  postgres_data:
