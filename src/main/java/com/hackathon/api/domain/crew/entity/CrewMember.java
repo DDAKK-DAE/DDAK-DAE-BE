@@ -10,6 +10,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * 크루 멤버 — 크루에 속한 사용자를 나타내는 조인 테이블 엔티티.
+ * 크루 생성 시 주최자와 수락된 참여자 전원이 일괄 삽입된다.
+ * (crew_id, user_id) UNIQUE 제약으로 중복 가입을 방지한다.
+ */
 @Entity
 @Table(name = "crew_members",
         uniqueConstraints = @UniqueConstraint(columnNames = {"crew_id", "user_id"}))
