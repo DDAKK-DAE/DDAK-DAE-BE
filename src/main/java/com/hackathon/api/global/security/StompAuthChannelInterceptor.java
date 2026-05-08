@@ -16,13 +16,6 @@ import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * STOMP 프레임 단위 보안 인터셉터.
- *
- * CONNECT — JWT 검증 후 세션에 Principal 주입.
- * SUBSCRIBE — /topic/crews/{crewId} 구독 시 크루 멤버십 검증.
- *             비멤버가 구독하면 AccessDeniedException → 클라이언트에 ERROR 프레임 전송.
- */
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
@@ -51,43 +44,47 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     }
 
     /**
-     * CONNECT: Authorization 헤더에서 JWT를 파싱해 Principal로 세팅.
-     * 토큰이 없거나 파싱 실패 시 Principal 없이 연결 — 이후 SUBSCRIBE/SEND에서 차단된다.
+     * CONNECT: JWT 없거나 파싱 실패 시 즉시 거부.
+     * principal 없이 세션이 열리면 이후 SEND 에서 NPE 가 발생하므로 여기서 차단한다.
      */
     private void handleConnect(StompHeaderAccessor accessor) {
         String authHeader = accessor.getFirstNativeHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwtUtil.parseUserId(authHeader.substring(7)).ifPresent(userId ->
-                    accessor.setUser(
-                            new UsernamePasswordAuthenticationToken(userId, null, List.of())));
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new AccessDeniedException("Authorization 헤더가 없습니다.");
         }
+
+        UUID userId = jwtUtil.parseUserId(authHeader.substring(7))
+                .orElseThrow(() -> new AccessDeniedException("유효하지 않은 토큰입니다."));
+
+        accessor.setUser(new UsernamePasswordAuthenticationToken(userId, null, List.of()));
     }
 
     /**
-     * SUBSCRIBE: /topic/crews/{crewId} 구독 요청 시 크루 멤버 여부를 검증.
-     * 비멤버 또는 미인증 사용자는 AccessDeniedException 으로 즉시 거부한다.
+     * SUBSCRIBE: /topic/crews/{crewId} 구독 시 크루 멤버 여부 검증.
+     * prefix 일치 후 crewId 가 UUID 형식이 아니면 즉시 거부한다.
      */
     private void handleSubscribe(StompHeaderAccessor accessor) {
         String destination = accessor.getDestination();
         if (destination == null || !destination.startsWith(CREW_TOPIC_PREFIX)) return;
 
-        // /topic/crews/{crewId} 에서 crewId 추출
         String crewIdStr = destination.substring(CREW_TOPIC_PREFIX.length()).split("/")[0];
+
+        // /topic/crews/ 로 시작했는데 UUID가 아니면 거부
+        UUID crewId;
+        try {
+            crewId = UUID.fromString(crewIdStr);
+        } catch (IllegalArgumentException e) {
+            throw new AccessDeniedException("잘못된 crewId 형식입니다: " + crewIdStr);
+        }
 
         Principal principal = accessor.getUser();
         if (principal == null) {
             throw new AccessDeniedException("인증된 사용자만 구독할 수 있습니다.");
         }
 
-        try {
-            UUID crewId = UUID.fromString(crewIdStr);
-            UUID userId = UUID.fromString(principal.getName());
-
-            if (!crewMemberRepository.existsByCrew_IdAndUser_Id(crewId, userId)) {
-                throw new AccessDeniedException("크루 멤버만 구독할 수 있습니다.");
-            }
-        } catch (IllegalArgumentException e) {
-            // crewId가 UUID 형식이 아닌 경우 무시 (다른 topic일 수 있음)
+        UUID userId = UUID.fromString(principal.getName());
+        if (!crewMemberRepository.existsByCrew_IdAndUser_Id(crewId, userId)) {
+            throw new AccessDeniedException("크루 멤버만 구독할 수 있습니다.");
         }
     }
 }
