@@ -113,6 +113,27 @@ public class ReelService {
                 })
                 .toList();
 
-        return new ChallengeReelFeedResponse(challenge.getAudioUrl(), reelResponses);
+        // 챌린지가 마감되어 크루가 생성된 경우 crewId 포함 — 프론트에서 크루 공간으로 이동에 사용
+        UUID crewId = crewRepository.findByChallenge_Id(challengeId)
+                .map(Crew::getId)
+                .orElse(null);
+
+        return new ChallengeReelFeedResponse(challenge.getAudioUrl(), crewId, reelResponses);
+    }
+
+    /**
+     * 유저 릴스 이력 조회 — reel_participants 기반으로 해당 유저가 참여한 릴스를 반환한다.
+     * 마이페이지에서 본인 이력 조회 및 타 유저 프로필 조회 양쪽에서 사용한다.
+     */
+    public List<ReelResponse> getUserReels(UUID userId) {
+        List<ReelParticipant> myEntries = reelParticipantRepository.findByUser_Id(
+                userId, PageRequest.ofSize(50));
+
+        return myEntries.stream()
+                .map(rp -> {
+                    List<ReelParticipant> participants = reelParticipantRepository.findByReel_Id(rp.getReel().getId());
+                    return ReelResponse.from(rp.getReel(), participants);
+                })
+                .toList();
     }
 }

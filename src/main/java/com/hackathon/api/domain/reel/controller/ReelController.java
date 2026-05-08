@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,5 +43,11 @@ public class ReelController {
             @PathVariable UUID challengeId,
             @RequestParam(required = false) String type) {
         return ApiResponse.ok(reelService.getChallengeReels(challengeId, type));
+    }
+
+    @Operation(summary = "유저 릴스 이력 조회", description = "reel_participants 기반으로 해당 유저가 참여한 릴스 목록을 반환합니다.")
+    @GetMapping("/users/{userId}/reels")
+    public ApiResponse<List<ReelResponse>> getUserReels(@PathVariable UUID userId) {
+        return ApiResponse.ok(reelService.getUserReels(userId));
     }
 }
