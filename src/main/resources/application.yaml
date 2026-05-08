@@ -4,6 +4,12 @@ spring:
   profiles:
     active: local
 
+spring:
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
+
 app:
   jwt:
     secret: ${JWT_SECRET:change-this-to-32+chars-secret-for-local-dev}
@@ -14,6 +20,9 @@ app:
     api-key: ${ANTHROPIC_API_KEY:}
     model: claude-sonnet-4-6
     base-url: https://api.anthropic.com
+  upload:
+    base-url: ${UPLOAD_BASE_URL:http://localhost:8080}
+    path: ${UPLOAD_PATH:./uploads}
 
 ---
 spring:
